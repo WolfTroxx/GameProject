@@ -1,0 +1,17 @@
+[gd_scene format=3 uid="uid://b1ttv7gv7gk18"]
+
+[ext_resource type="Script" uid="uid://bhnpnh8aq8tcu" path="res://timer.gd" id="1_j2q8x"]
+[ext_resource type="Script" uid="uid://1akyqilh8sbi" path="res://simulator.gd" id="2_112p8"]
+[ext_resource type="Script" uid="uid://b5abgoc1k54nx" path="res://network_manager.gd" id="2_e2u21"]
+
+[node name="Node" type="Node" unique_id=1133344894]
+
+[node name="Timer" type="Node" parent="." unique_id=1896589297]
+script = ExtResource("1_j2q8x")
+
+[node name="NetworkManager" type="Node" parent="." unique_id=272575940]
+script = ExtResource("2_e2u21")
+
+[node name="Simulator" type="Node" parent="." unique_id=33216047 node_paths=PackedStringArray("sibling_node")]
+script = ExtResource("2_112p8")
+sibling_node = NodePath(".")
