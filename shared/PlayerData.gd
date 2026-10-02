@@ -5,8 +5,8 @@ extends RefCounted
 ##Contains necessary data for the player entity to work
 
 ##Constant movement speed
-const player_movement_speed: float = 10.0
-const npc_movement_speed: float = 5.0
+const player_movement_speed: float = 1.0
+const npc_movement_speed: float = 0.5
 
 ##Position of player
 var position: Vector2

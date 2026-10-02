@@ -18,19 +18,20 @@ func _process(_delta):
 	if state == WebSocketPeer.STATE_OPEN:
 		while socket.get_available_packet_count():
 			var packet: PackedByteArray = socket.get_packet()
-			print("Packet received of size: ", packet.size())
+			#print("Packet received of size: ", packet.size())
 			match packet[0]:
-				Opcode.Code.WORLD_UPDATE:
+				Shared.Code.WORLD_UPDATE:
 					SimulationRender.receive_world_update(packet)
-				Opcode.Code.NPC_JOIN:
+				Shared.Code.NPC_JOIN:
 					SimulationRender.add_npc(packet.decode_u8(1))
-				Opcode.Code.PLAYER_JOIN:
+				Shared.Code.PLAYER_JOIN:
 					SimulationRender.add_player(packet.decode_u8(1))
-				Opcode.Code.PLAYER_JOIN_SELF:
+				Shared.Code.PLAYER_JOIN_SELF:
 					WB_id_self = packet.decode_u32(2)
-				Opcode.Code.PLAYER_LEAVE:
+					print("Receiving client server id: ", WB_id_self)
+				Shared.Code.PLAYER_LEAVE:
 					pass
-				Opcode.Code.PLAYER_SHOOT:
+				Shared.Code.PLAYER_SHOOT:
 					pass
 				_:
 					print("Unknown opcode: ", packet[0])
@@ -42,3 +43,11 @@ func _process(_delta):
 		var reason = socket.get_close_reason()
 		print("WebSocket closed with code: %d, reason %s. Clean: %s" % [code, reason, code != -1])
 		set_process(false) # Stop processing.
+
+func send_movement_request(encoded_movement: int):
+	var packet: PackedByteArray
+	packet.resize(2)
+	packet[0] = Shared.Code.PLAYER_MOVEMENT
+	packet[1] = encoded_movement
+	#print("Sending encoded movement: ", packet)
+	socket.put_packet(packet)

@@ -5,14 +5,17 @@
 [sub_resource type="CanvasTexture" id="CanvasTexture_lnl3v"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_i54mi"]
+radius = 5.0990195
 
 [node name="CharacterBody2D" type="CharacterBody2D" unique_id=1509837004]
 script = ExtResource("1_jvb8y")
 
 [node name="Sprite2D" type="Sprite2D" parent="." unique_id=1367351463]
-position = Vector2(3.75, 3.25)
-scale = Vector2(8.5, 7.5)
+position = Vector2(1.110223e-16, -8.881784e-16)
+rotation = -3.1415925
+scale = Vector2(10.142336, 9.947448)
 texture = SubResource("CanvasTexture_lnl3v")
+offset = Vector2(2.3841858e-07, 0)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1656805904]
 shape = SubResource("CircleShape2D_i54mi")

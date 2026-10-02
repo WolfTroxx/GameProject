@@ -3,6 +3,9 @@ extends Node
 var players_id: Dictionary[int, PlayerData] = {}
 var npc_id: Dictionary[int, PlayerData] = {}
 
+@onready var Client_player = $"../CharacterBody2D"
+@onready var Network_client_id = $"../NetworkManager"
+
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
 	pass # Replace with function body.
@@ -13,7 +16,7 @@ func _process(delta: float) -> void:
 	pass
 
 func receive_world_update(payload: PackedByteArray):
-	print("Received world update packet. ")
+	#print("Received world update packet. ")
 	var buf := StreamPeerBuffer.new()
 	buf.data_array = payload
 	buf.seek(3)
@@ -24,12 +27,16 @@ func receive_world_update(payload: PackedByteArray):
 		var id := buf.get_u32()
 		var x := buf.get_16() / 10.0
 		var y := buf.get_16() / 10.0
-		print("  player ", id, " @ ", Vector2(x, y))
+		#print("  player ", id, " @ ", Vector2(x, y))
+		if id == Network_client_id.WB_id_self:
+			
+			Client_player.client_position.x = x
+			Client_player.client_position.y = y
 	for i in npcs_count:
 		var id := buf.get_u32()
 		var x := buf.get_16() / 10.0
 		var y := buf.get_16() / 10.0
-		print("  npc ", id, " @ ", Vector2(x, y))
+		#print("  npc ", id, " @ ", Vector2(x, y))
 
 func add_player(id: int):
 	var new_player = PlayerData.new(Vector2.ZERO)

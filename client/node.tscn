@@ -1,10 +1,13 @@
 [gd_scene format=3 uid="uid://d3i4r0j622xtn"]
 
 [ext_resource type="Script" uid="uid://ddss3irhu0fm6" path="res://network_manager.gd" id="1_112p8"]
+[ext_resource type="PackedScene" uid="uid://cuytwnr7fje3e" path="res://Player_Body.tscn" id="1_e2u21"]
 [ext_resource type="Script" uid="uid://bij4vp4oamtxx" path="res://simulation_render.gd" id="2_e2u21"]
 [ext_resource type="Script" uid="uid://d3ta71k3v0wj6" path="res://graphics_render.gd" id="3_bss38"]
 
 [node name="Node" type="Node" unique_id=1380998351]
+
+[node name="CharacterBody2D" parent="." unique_id=1509837004 instance=ExtResource("1_e2u21")]
 
 [node name="NetworkManager" type="Node" parent="." unique_id=1892613458]
 script = ExtResource("1_112p8")

@@ -48,7 +48,9 @@ func simulation_tick(_delta: float, _tick: int):
 			npc.recent_movement = true
 			npc.previous_position = npc.position
 	#print("Tick: ", tick, " Elapsed time: ", delta)
+	#print("Snapshot countdown: ", snapshot_countdown)
 	if snapshot_countdown == 0:
+		#print("Building snapshot")
 		snapshot_build()
 		snapshot_countdown = 2
 	snapshot_countdown -= 1
@@ -86,7 +88,7 @@ func snapshot_build():
 		snapshot.put_16(qy)
 		player.change_of_direction = false
 		player_update_count += 1
-
+	#print("Player count: ", player_update_count)
 	var npc_update_count:= 0
 	for id in npc_id:
 		var npc = npc_id[id]
@@ -99,37 +101,27 @@ func snapshot_build():
 		snapshot.put_16(qy)
 		npc.change_of_direction = false
 		npc_update_count += 1
+		
 	snapshot.seek(2)
 	snapshot.put_u16(player_update_count)
 	snapshot.seek(4)
 	snapshot.put_u16(npc_update_count)
+	
 	world_snapshot_ready.emit(snapshot.data_array)
 
 func packet_payload(player_id: int, player_packet: PackedByteArray):
 	pass
 
-func player_movement_request(player_id: int, packet: PackedByteArray):
+func player_movement_request(player_id: int, packet: int):
 	var player = players_id[WB_id_player_id[player_id]].player_data
 	var new_player_direction: Vector2
-	match packet.decode_u8(1):
-		0b0000:
-			new_player_direction = Vector2.ZERO
-		0b1000:
-			new_player_direction = Vector2(1, -1) * 0.70710678
-		0b1001:
-			new_player_direction = Vector2(1, 0)
-		0b1010:
-			new_player_direction = Vector2(1, 1) * 0.70710678
-		0b1011:
-			new_player_direction = Vector2(0, 1)
-		0b1100:
-			new_player_direction = Vector2(-1, 1) * 0.70710678
-		0b1101:
-			new_player_direction = Vector2(-1, 0)
-		0b1110:
-			new_player_direction = Vector2(-1, -1) * 0.70710678
-		0b1111:
-			new_player_direction = Vector2(0, -1)
+	#var packet_bin: int = packet.decode_u8(0)
+	var x = (packet&1) - ((packet>>1)&1)
+	var y = ((packet>>2)&1) - ((packet>>3)&1)
+	if ( x && y ):
+		x *= 0.7071
+		y *= 0.7071
+	new_player_direction = Vector2(x, y)
 	if player.movement_direction == new_player_direction:
 		return
 	player.movement_direction = new_player_direction

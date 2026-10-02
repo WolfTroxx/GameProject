@@ -1,5 +1,8 @@
-class_name Opcode
+class_name Shared
 extends RefCounted
+
+const POSITION_ACCEPTED_ERROR = 1
+const CORRECTION_RATE = 5
 
 enum Code { #Operation codes; 1 Byte size maximum
 	WORLD_UPDATE =			0b00000001,
@@ -11,9 +14,4 @@ enum Code { #Operation codes; 1 Byte size maximum
 	PLAYER_MOVEMENT =		0b00001010,
 	PLAYER_MESSAGE =		0b00001011,
 	PLAYER_SHOOT =			0b00001100
-	
-	
-	
-	
-	
 }

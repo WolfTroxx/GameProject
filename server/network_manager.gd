@@ -7,56 +7,116 @@ var WB_id_player_id: Dictionary[int, int] = {}
 var system_player_id: = 0
 @onready var Simulator = get_node("../Simulator")
 
+var TCP_Server = TCPServer.new()
+
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
-	var server_peer = WebSocketMultiplayerPeer.new()
-	var error = server_peer.create_server(9999)
+	
+	var error = TCP_Server.listen(9999, "*")
+	
+	#var server_peer = WebSocketMultiplayerPeer.new()
+	#var error = server_peer.create_server(9999)
 	if error != OK:
 		print("Connection failed")
 	else:
 		print("Server open")
-	multiplayer.multiplayer_peer = server_peer
-	server_peer.peer_connected.connect(_on_peer_connected)
-	server_peer.peer_disconnected.connect(_on_peer_disconnected)
-	multiplayer.peer_packet.connect(_on_peer_packet)
+		
+	#multiplayer.multiplayer_peer = server_peer
+	#server_peer.peer_connected.connect(_on_peer_connected)
+	#server_peer.peer_disconnected.connect(_on_peer_disconnected)
+	#multiplayer.peer_packet.connect(_on_peer_packet)
 	Simulator.world_snapshot_ready.connect(snapshot_update)
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
+
+var pending_websockets: Array[WebSocketPeer] = []
+var WebSocket_player_id: int = 0
+
 func _process(_delta: float) -> void:
-	pass
-
-func _on_peer_connected(new_id: int):
-	var multiplayer_peer = multiplayer.multiplayer_peer
-	var player := ConnectedPlayer.new(multiplayer_peer.get_peer(new_id))
-	player.ip_address = multiplayer_peer.get_peer_address(new_id)
-	player.WS_id = new_id
-	WB_id_player_id[new_id] = system_player_id
-	connected_players_id[system_player_id] = player
-	Simulator.new_player_join(system_player_id, new_id, player)
-	print("New player: ", new_id, " IP Address: ", player.ip_address, "System id: ", system_player_id)
-	system_player_id += 1
+	if TCP_Server.is_listening():
+		while TCP_Server.is_connection_available():
+			var websocket:= WebSocketPeer.new()
+			websocket.accept_stream(TCP_Server.take_connection())
+			pending_websockets.append(websocket)
 	
-func _on_peer_disconnected(disconnect_id: int):
-	print("Player disconnected. (id: ", disconnect_id, ")")
-	var existed = connected_players_id.erase(WB_id_player_id[disconnect_id])
-	WB_id_player_id.erase(disconnect_id)
-	Simulator.player_leave(system_player_id, disconnect_id)
-	if existed:
-		print("Deleted connected player. (id: ", disconnect_id, ")")
+		for pending_websocket in pending_websockets.duplicate():
+			pending_websocket.poll()
+			match pending_websocket.get_ready_state():
+				WebSocketPeer.STATE_OPEN:
+					pending_websockets.erase(pending_websocket)
+					var player := ConnectedPlayer.new(pending_websocket)
+					player.ip_address = pending_websocket.get_connected_host()
+					player.WS_id = WebSocket_player_id
+					WB_id_player_id[WebSocket_player_id] = system_player_id
+					connected_players_id[system_player_id] = player
+					Simulator.new_player_join(system_player_id, WebSocket_player_id, player)
+					print("New player: ", WebSocket_player_id, " IP Address: ", player.ip_address, "System id: ", system_player_id)
+					system_player_id += 1
+					WebSocket_player_id += 1
+				WebSocketPeer.STATE_CLOSED:
+					pending_websockets.erase(pending_websocket)
+	
+		for player_id in connected_players_id.keys():
+			var player_websocket = connected_players_id[player_id].websocket
+			var player_WB_id = connected_players_id[player_id].WS_id
+			player_websocket.poll()
+			match player_websocket.get_ready_state():
+				WebSocketPeer.STATE_OPEN:
+					while player_websocket.get_available_packet_count() > 0:
+						_handle_peer_packet(player_id, player_websocket.get_packet())
+				WebSocketPeer.STATE_CLOSING:
+					pass
+				WebSocketPeer.STATE_CLOSED:
+					print("Player disconnected. (id: ", player_id, ")")
+					Simulator.player_leave(WB_id_player_id[player_id], player_WB_id)
+					var existed = connected_players_id.erase(WB_id_player_id[player_id])
+					WB_id_player_id.erase(player_WB_id)
+					if existed:
+						print("Deleted connected player. (id: ", player_id, ")")
 
-func _on_peer_packet(id: int, packet: PackedByteArray):
+func _handle_peer_packet(id: int, packet: PackedByteArray):
+	if packet.size() < 1:
+		print("Error, broken package? Peer id: ", id)
+		return
 	match packet[0]:
-		Opcode.Code.PLAYER_MOVEMENT:
-			Simulator.player_movement_request(id, packet)
+		Shared.Code.PLAYER_MOVEMENT:
+			#print("Receiving player movement update.")
+			if packet.size() < 2:
+				print("Incomplete movement packet from player id: ", id, " Packet: ", packet, " Packet size: ", packet.size())
+			Simulator.player_movement_request(id, packet[1])
+		_:
+			print("Unknown Opcode: ", packet[0], " From player id: ", id)
+
+
+#func _on_peer_connected(new_id: int):
+	#var multiplayer_peer = multiplayer.multiplayer_peer
+	#var player := ConnectedPlayer.new(multiplayer_peer.get_peer(new_id))
+	#player.ip_address = multiplayer_peer.get_peer_address(new_id)
+	#player.WS_id = new_id
+	#WB_id_player_id[new_id] = system_player_id
+	#connected_players_id[system_player_id] = player
+	#Simulator.new_player_join(system_player_id, new_id, player)
+	#print("New player: ", new_id, " IP Address: ", player.ip_address, "System id: ", system_player_id)
+	#system_player_id += 1
+	#
+#func _on_peer_disconnected(disconnect_id: int):
+	#print("Player disconnected. (id: ", disconnect_id, ")")
+	#var existed = connected_players_id.erase(WB_id_player_id[disconnect_id])
+	#WB_id_player_id.erase(disconnect_id)
+	#Simulator.player_leave(system_player_id, disconnect_id)
+	#if existed:
+		#print("Deleted connected player. (id: ", disconnect_id, ")")
+
+
 
 func snapshot_update(packet: PackedByteArray):
 	var buffer := PackedByteArray()
 	buffer.resize(packet.size() + 1)
-	buffer[0] = Opcode.Code.WORLD_UPDATE
+	buffer[0] = Shared.Code.WORLD_UPDATE
 	for i in packet.size():
 		buffer[1 + i] = packet[i]
+	#print("World update of size: ", buffer.size(), " Op code: ", buffer[0])
 	broadcast(buffer)
-	print("World update of size: ", buffer.size(), " Op code: ", buffer[0])
 	receive_world_update(buffer)
 
 func receive_world_update(payload: PackedByteArray):
@@ -90,20 +150,20 @@ func broadcast(payload: PackedByteArray):
 			print("Error: WebSocketPeer Closed/Non-responding")
 			continue
 		player.websocket.put_packet(payload)
-		print(payload)
+		#print(payload)
 
 func update_new_player_join(id: int, WB_id: int):
 	var buffer := StreamPeerBuffer.new()
-	buffer.put_u8(Opcode.Code.PLAYER_JOIN)
+	buffer.put_u8(Shared.Code.PLAYER_JOIN)
 	buffer.put_u8(id)
 	broadcast(buffer.data_array)
 	buffer.put_u32(WB_id)
 	buffer.seek(0)
-	buffer.put_u8(Opcode.Code.PLAYER_JOIN_SELF)
+	buffer.put_u8(Shared.Code.PLAYER_JOIN_SELF)
 	connected_players_id[id].websocket.put_packet(buffer.data_array)
 
 func update_player_leave(id: int):
 	var buffer := StreamPeerBuffer.new()
-	buffer.put_u8(Opcode.Code.PLAYER_LEAVE)
+	buffer.put_u8(Shared.Code.PLAYER_LEAVE)
 	buffer.put_u8(id)
 	broadcast(buffer.data_array)

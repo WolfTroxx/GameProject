@@ -1,6 +1,6 @@
 extends Node
 
-const SIMULATOR_DT: = 1.0/10.0
+const SIMULATOR_DT: = 1.0/60.0
 const SNAPSHOT_DT: = 1.0/30.0
 
 var old_simulator_dt: = 0.0
