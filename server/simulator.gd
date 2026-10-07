@@ -1,6 +1,6 @@
 extends Node
 
-var players_id: Dictionary[int, ConnectedPlayer] = {}
+var players_id: Dictionary[int, PlayerData] = {}
 ##Dictionary with key WebSocket id and entry system id
 var WB_id_player_id: Dictionary[int, int] = {}
 var npc_id: Dictionary[int, PlayerData] = {}
@@ -34,12 +34,17 @@ func _process(_delta: float) -> void:
 
 func simulation_tick(_delta: float, _tick: int):
 	for id in players_id:
-		var player = players_id[id].player_data
+		var player = players_id[id]
 		if player.change_of_direction || player.movement_direction != Vector2.ZERO:
+			#print("Player id: ", id, "Changing direction: ", player.change_of_direction, "Direction: ", player.movement_direction)
 			player.position += PlayerData.player_movement_speed * player.movement_direction
+			player.recent_movement = true
+			if player.movement_direction == Vector2.ZERO:
+				player.recent_movement = false
 		if player.previous_position != player.position:
 			player.recent_movement = true
 			player.previous_position = player.position
+			
 	for id in npc_id:
 		var npc = npc_id[id]
 		if npc.change_of_direction:
@@ -55,9 +60,8 @@ func simulation_tick(_delta: float, _tick: int):
 		snapshot_countdown = 2
 	snapshot_countdown -= 1
 
-func new_player_join(system_id: int, id: int, player: ConnectedPlayer):
-	player.player_data = PlayerData.new(Vector2.ZERO)
-	player.WS_id = id
+func new_player_join(system_id: int, id: int):
+	var player = PlayerData.new(Vector2.ZERO)
 	player.world_loaded = true
 	WB_id_player_id[id] = system_id
 	players_id[system_id] = player
@@ -78,28 +82,28 @@ func snapshot_build():
 
 	var player_update_count:= 0
 	for id in players_id:
-		var player = players_id[id].player_data
-		if !player.recent_movement:
+		var player = players_id[id]
+		if not player.recent_movement:
+			#print("Player not moving, skipping its update.")
 			continue
-		snapshot.put_u32(id)
+		#print("Player id: ", id, "Changes direction, sending update")
+		snapshot.put_u8(id)
 		var qx := clampi(int(player.position.x * 10.0), -32768, 32767)
 		var qy := clampi(int(player.position.y * 10.0), -32768, 32767)
 		snapshot.put_16(qx)
 		snapshot.put_16(qy)
-		player.change_of_direction = false
 		player_update_count += 1
 	#print("Player count: ", player_update_count)
 	var npc_update_count:= 0
 	for id in npc_id:
 		var npc = npc_id[id]
-		if !npc.recent_movement:
+		if not npc.recent_movement:
 			continue
 		snapshot.put_u32(id)
 		var qx := clampi(int(npc.position.x * 10.0), -32768, 32767)
 		var qy := clampi(int(npc.position.y * 10.0), -32768, 32767)
 		snapshot.put_16(qx)
 		snapshot.put_16(qy)
-		npc.change_of_direction = false
 		npc_update_count += 1
 		
 	snapshot.seek(2)
@@ -113,7 +117,7 @@ func packet_payload(player_id: int, player_packet: PackedByteArray):
 	pass
 
 func player_movement_request(player_id: int, packet: int):
-	var player = players_id[WB_id_player_id[player_id]].player_data
+	var player = players_id[WB_id_player_id[player_id]]
 	var new_player_direction: Vector2
 	#var packet_bin: int = packet.decode_u8(0)
 	var x = (packet&1) - ((packet>>1)&1)
@@ -122,7 +126,12 @@ func player_movement_request(player_id: int, packet: int):
 		x *= 0.7071
 		y *= 0.7071
 	new_player_direction = Vector2(x, y)
+	#print("Player directions: ")
+	#print(player.movement_direction)
+	#print(new_player_direction)
 	if player.movement_direction == new_player_direction:
+		player.change_of_direction = false
+		print("Player:change_of_direction = ", player.change_of_direction)
 		return
 	player.movement_direction = new_player_direction
 	player.change_of_direction = true

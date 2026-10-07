@@ -1,6 +1,6 @@
-[gd_scene format=3 uid="uid://cwf5k7kaarwfo"]
+[gd_scene format=3 uid="uid://cuytwnr7fje3e"]
 
-[ext_resource type="Script" uid="uid://up3hthorxkit" path="res://player_body.gd" id="1_jvb8y"]
+[ext_resource type="Script" uid="uid://dvq6wrxbl0uhq" path="res://self_player_body.gd" id="1_6eehg"]
 
 [sub_resource type="CanvasTexture" id="CanvasTexture_lnl3v"]
 
@@ -8,7 +8,7 @@
 radius = 31.016125
 
 [node name="CharacterBody2D" type="CharacterBody2D" unique_id=1509837004]
-script = ExtResource("1_jvb8y")
+script = ExtResource("1_6eehg")
 
 [node name="Sprite2D" type="Sprite2D" parent="." unique_id=1367351463]
 position = Vector2(1.2090606e-05, 1.8247426e-12)
@@ -22,7 +22,7 @@ shape = SubResource("CircleShape2D_i54mi")
 
 [node name="Label" type="Label" parent="." unique_id=744833821]
 offset_left = -95.0
-offset_top = -53.0
+offset_top = -54.0
 offset_right = 95.0
-offset_bottom = -30.0
+offset_bottom = -31.0
 horizontal_alignment = 1

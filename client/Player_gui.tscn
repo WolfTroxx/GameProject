@@ -1,0 +1,49 @@
+[gd_scene format=3 uid="uid://bqa4iygbjhk7m"]
+
+[ext_resource type="Script" uid="uid://bhmfaeomsyqn0" path="res://player_gui.gd" id="1_oxv1y"]
+
+[node name="VBoxContainer" type="VBoxContainer" unique_id=319445563]
+offset_left = 7.0
+offset_top = 2.0
+offset_right = 196.0
+offset_bottom = 103.0
+script = ExtResource("1_oxv1y")
+
+[node name="HBoxContainer" type="HBoxContainer" parent="." unique_id=512140462]
+layout_mode = 2
+alignment = 1
+
+[node name="Button" type="Button" parent="HBoxContainer" unique_id=211592677]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+text = "Connect"
+
+[node name="Label" type="Label" parent="HBoxContainer" unique_id=1123510735]
+layout_mode = 2
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="." unique_id=1542116467]
+layout_mode = 2
+alignment = 1
+
+[node name="Button" type="Button" parent="HBoxContainer2" unique_id=1476968697]
+visible = false
+layout_mode = 2
+text = "Name"
+
+[node name="LineEdit" type="LineEdit" parent="HBoxContainer2" unique_id=430433924]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+placeholder_text = "username"
+alignment = 1
+max_length = 100
+
+[node name="HBoxContainer3" type="HBoxContainer" parent="." unique_id=1550506976]
+layout_mode = 2
+alignment = 1
+
+[node name="Label" type="Label" parent="HBoxContainer3" unique_id=951340612]
+layout_mode = 2
+
+[node name="Button" type="Button" parent="HBoxContainer3" unique_id=451740147]
+layout_mode = 2
+text = "Spawn"
